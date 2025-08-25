@@ -1,0 +1,26 @@
+{
+  "name": "izin-talep-app",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@pinia/nuxt": "^0.11.2",
+    "@primevue/nuxt-module": "^4.3.7",
+    "nuxt": "^3.12.3",
+    "pinia": "^3.0.3",
+    "primeicons": "^6.0.1",
+    "primevue": "^3.53.1"
+  },
+  "devDependencies": {
+    "@nuxtjs/tailwindcss": "^6.14.0",
+    "@types/node": "^22.17.2",
+    "typescript": "^5.9.2",
+    "vue-tsc": "^3.0.5"
+  }
+}
