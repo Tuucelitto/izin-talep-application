@@ -1,0 +1,52 @@
+
+    {
+  "users": [
+    {
+      "id": "emp-001",
+      "ad": "Tuğçe Uygur",
+      "email": "tugce@company.com",
+      "rol": "CALISAN"
+    },
+    {
+      "id": "mgr-001", 
+      "ad": "Betül Uygur",
+      "email": "betul@company.com",
+      "rol": "YONETICI"
+    }
+  ],
+"izinler": [
+    {
+      "id": "1",
+      "calisanId": "emp-001",
+      "calisanAd": "Tuğçe Uygur",
+      "tur": "Yıllık",
+      "baslangic": "2025-08-27T00:00:00.000Z",
+      "bitis": "2025-08-29T00:00:00.000Z",
+      "durum": "BEKLEMEDE",
+      "olusturmaTarihi": "2025-08-25T12:00:00.000Z",
+      "aciklama": "Tatildeyim"
+    },
+    {
+      "id": "8d0d",
+      "calisanId": "8b531089-e24f-4763-9ac6-8b8d7b823084",
+      "calisanAd": "tuğçe uygur",
+      "tur": "Hastalık",
+      "baslangic": "2025-08-26T21:00:00.000Z",
+      "bitis": "2025-08-27T21:00:00.000Z",
+      "aciklama": "hastalık izni talep ediyorum.",
+      "durum": "ONAYLANDI",
+      "olusturmaTarihi": "2025-08-26T13:30:58.415Z"
+    },
+    {
+      "id": "e167",
+      "calisanId": "5a5ace32-c76e-4f67-924f-b5be591b0e2c",
+      "calisanAd": "Tuğçe Uygur",
+      "tur": "Diğer",
+      "baslangic": "2025-08-26T13:36:53.143Z",
+      "bitis": "2025-08-27T21:00:00.000Z",
+      "aciklama": "",
+      "durum": "REDDEDILDI",
+      "olusturmaTarihi": "2025-08-26T13:36:56.646Z"
+    }
+  ]
+}

@@ -1,29 +1,41 @@
 import { defineStore } from 'pinia'
 import type { Izin } from '~/types/izin'
 
+// JSON Server base URL (örnek)
+const API_URL = 'http://localhost:3001'
+
 // İzinleri yönetmek için Pinia store
 //izinler store’un benzersiz ismi, Pinia bunu internal olarak kullanır
 export const useIzinler = defineStore('izinler', {
   state: () => ({
-    izinler: [] as Izin[],
+    izinler: [] as Izin[],  // Tüm izinler burada tutulacak
     loading: false
   }),
 
   getters: {
+    // Tüm izinleri döndür
     tum: (state) => state.izinler,
-    calisanTalebi: (state) => (calisanId: string) => 
+    // Belirli bir çalışana ait izinleri döndür
+    calisanTalebi: (state) => (calisanId: string) =>
       state.izinler.filter(izin => izin.calisanId === calisanId)
   },
 
   actions: {
-    init() {
-      // Client-side'da çalıştığından emin ol
-      if (process.client) {
-        // LocalStorage'dan izinleri yükle
-        this.loadFromStorage()
+    // JSON Server’dan izinleri çek
+    async fetchFromServer() {
+      try {
+        this.loading = true
+        const res = await fetch(API_URL)
+        const data = await res.json()
+        this.izinler = data // State'i güncelle
+      } catch (error) {
+        console.error('İzinler yüklenirken hata:', error)
+      } finally {
+        this.loading = false
       }
     },
 
+    /*
     //LocalStorage’dan kaydedilmiş izinleri alır ve izinler state’ine yükler
     loadFromStorage() {
       try {
@@ -49,45 +61,86 @@ export const useIzinler = defineStore('izinler', {
         console.error('İzinler kaydedilirken hata:', error)
       }
     },
+    */
 
-    olustur(izinData: Omit<Izin, 'id' | 'durum' | 'olusturmaTarihi'>) {
+    // Yeni izin oluştur ve server’a gönder
+    async olustur(izinData: Omit<Izin, 'id' | 'durum' | 'olusturmaTarihi'>) {
       const yeniIzin: Izin = {
-        id: crypto.randomUUID(),
-        durum: 'BEKLEMEDE',
-        olusturmaTarihi: new Date().toISOString(),
+        id: crypto.randomUUID(),           // Benzersiz ID
+        durum: 'BEKLEMEDE',                // Başlangıç durumu
+        olusturmaTarihi: new Date().toISOString(), // Oluşturulma zamanı
         ...izinData
       }
-      // Yeni izni state’e ekle ve LocalStorage’a kaydet
-      this.izinler.push(yeniIzin)
-      //this.saveToStorage()
-    },
 
-    // İzni onayla ve opsiyonel not ekle
-    onayla(id: string, not?: string) {
-      const izin = this.izinler.find(i => i.id === id)
-      if (izin) {
-        izin.durum = 'ONAYLANDI'
-        if (not) izin.not = not
-        //this.saveToStorage()
+            try {
+        // POST isteği ile server’a kaydet
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(yeniIzin)
+        })
+        const saved = await res.json()
+        this.izinler.push(saved) // State’e ekle
+      } catch (error) {
+        console.error('İzin oluşturulurken hata:', error)
       }
     },
 
-    // İzni reddet ve opsiyonel not ekle
-    reddet(id: string, not?: string) {
+
+    // İzni onayla ve opsiyonel not ekle
+    async onayla(id: string, not?: string) {
       const izin = this.izinler.find(i => i.id === id)
-      if (izin) {
-        izin.durum = 'REDDEDILDI'
-        if (not) izin.not = not
-        //this.saveToStorage()
+      if (!izin) return
+      izin.durum = 'ONAYLANDI'
+      if (not) izin.not = not
+
+      try {
+        // PATCH ile server tarafını güncelle
+        await fetch(`${API_URL}/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ durum: izin.durum, not: izin.not })
+        })
+      } catch (error) {
+        console.error('İzin onaylanırken hata:', error)
+      }
+    },
+
+
+    // İzni reddet ve opsiyonel not ekle
+    async reddet(id: string, not?: string) {
+      const izin = this.izinler.find(i => i.id === id)
+      if (!izin) return
+      izin.durum = 'REDDEDILDI'
+      if (not) izin.not = not
+
+      try {
+        // PATCH ile server tarafını güncelle
+        await fetch(`${API_URL}/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ durum: izin.durum, not: izin.not })
+        })
+      } catch (error) {
+        console.error('İzin reddedilirken hata:', error)
       }
     },
 
     // Çalışan kendi iznini iptal edebilir (sadece beklemedeyse)
-    iptal(id: string, calisanId: string) {
+    async iptal(id: string, calisanId: string) {
       const izin = this.izinler.find(i => i.id === id && i.calisanId === calisanId)
-      if (izin && izin.durum === 'BEKLEMEDE') {
-        izin.durum = 'IPTAL_EDILDI'
-        //this.saveToStorage()
+      if (!izin || izin.durum !== 'BEKLEMEDE') return
+      izin.durum = 'IPTAL_EDILDI'
+
+      try {
+        // PATCH ile server tarafını güncelle
+        await fetch(`${API_URL}/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ durum: izin.durum })
+        })
+      } catch (error) {
+        console.error('İzin iptal edilirken hata:', error)
       }
     },
 

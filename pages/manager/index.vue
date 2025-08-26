@@ -1,13 +1,32 @@
 <script setup lang="ts">
-// Client-side rendering kontrolü
+import { ref, onMounted } from 'vue'
+import { useKullanici } from '~/stores/useKullanici'
+import { useIzinler } from '~/stores/useIzinler'
+import { navigateTo } from '#app'
+import axios from 'axios' // JSON Server ile iletişim için
+
+// PrimeVue bileşenleri
+import Button from 'primevue/button'
+import DataTable from 'primevue/datatable'
+import Column from 'primevue/column'
+import Tag from 'primevue/tag'
+import Dialog from 'primevue/dialog'
+import Textarea from 'primevue/textarea'
+
+// SSR kontrolü: sunucu tarafında çalışıyorsa 404 göster
 if (process.server) {
   throw createError({ statusCode: 404, statusMessage: 'Page Not Found' })
 }
 
+// Store'lar
 const kullaniciStore = useKullanici()
-const izinler = useIzinler()
+const izinler = useIzinler() as ReturnType<typeof useIzinler> // init gibi action'ları tanıyabilmesi için
 
-onMounted(() => {
+// JSON Server URL - düzeltildi
+const API_URL = 'http://localhost:3001/izinler'
+
+// Sayfa yüklendiğinde kullanıcı yoksa ana sayfaya yönlendir
+onMounted(async () => {
   if (!kullaniciStore.kullanici) {
     navigateTo('/')
     return
@@ -16,18 +35,23 @@ onMounted(() => {
     navigateTo('/')
     return
   }
-  izinler.init()
+
+  // JSON Server'dan izinleri çek
+  await fetchIzinler()
 })
 
+// Filtreler
 const filtreler = ref({
   durum: { value: null, matchMode: 'equals' }
 })
 
+// Dialog kontrol değişkenleri
 const showDialog = ref(false)
 const seciliId = ref<string | null>(null)
 const notMetni = ref('')
 const islem = ref<'ONAY' | 'RED' | null>(null)
 
+// Dialog açma fonksiyonu
 const acDialog = (id: string, act: 'ONAY' | 'RED') => {
   seciliId.value = id
   islem.value = act
@@ -35,25 +59,54 @@ const acDialog = (id: string, act: 'ONAY' | 'RED') => {
   notMetni.value = ''
 }
 
-const onaylaReddet = () => {
+// İzinleri JSON Server'dan çek
+const fetchIzinler = async () => {
+  try {
+    const res = await axios.get(API_URL)
+    izinler.izinler = res.data // Pinia state'e yükle
+  } catch (error) {
+    console.error('İzinler yüklenirken hata:', error)
+  }
+}
+
+// Onayla / Reddet fonksiyonu - düzeltildi
+const onaylaReddet = async () => {
   if (!seciliId.value || !islem.value) return
-  
-  if (islem.value === 'ONAY') {
-    izinler.onayla(seciliId.value, notMetni.value)
-    alert('İzin talebi onaylandı!')
+
+  try {
+    const izin = izinler.izinler.find(i => i.id === seciliId.value)
+    if (!izin) return
+
+    const durum = islem.value === 'ONAY' ? 'ONAYLANDI' : 'REDDEDILDI' as const
+    
+    // Güncellenen izin objesi
+    const guncellenenIzin = {
+      ...izin,
+      durum: durum as 'ONAYLANDI' | 'REDDEDILDI',
+      ...(notMetni.value && { not: notMetni.value })
+    }
+
+    // JSON Server'a PUT isteği ile güncelle
+    await axios.put(`${API_URL}/${izin.id}`, guncellenenIzin)
+
+    // Store'daki veriyi de güncelle
+    const index = izinler.izinler.findIndex(i => i.id === seciliId.value)
+    if (index > -1) {
+      izinler.izinler[index] = guncellenenIzin
+    }
+
+    alert(`İzin talebi ${durum === 'ONAYLANDI' ? 'onaylandı' : 'reddedildi'}!`)
+    showDialog.value = false
+  } catch (error) {
+    console.error('İzin güncellenirken hata:', error)
+    alert('İzin güncellenirken bir hata oluştu!')
   }
-  if (islem.value === 'RED') {
-    izinler.reddet(seciliId.value, notMetni.value)
-    alert('İzin talebi reddedildi!')
-  }
-  
-  showDialog.value = false
 }
 
-const formatTarih = (tarih: string) => {
-  return new Date(tarih).toLocaleDateString('tr-TR')
-}
+// Tarihi Türkçe formatta göster
+const formatTarih = (tarih: string) => new Date(tarih).toLocaleDateString('tr-TR')
 
+// Çıkış yapma fonksiyonu
 const logout = () => {
   kullaniciStore.logout()
   navigateTo('/')
@@ -76,7 +129,7 @@ const logout = () => {
       <h2 class="text-xl font-bold mb-4">Tüm İzin Talepleri</h2>
 
       <DataTable 
-        :value="izinler.tum" 
+        :value="izinler.izinler" 
         :filters="filtreler" 
         filterDisplay="menu"
         paginator 
@@ -102,7 +155,7 @@ const logout = () => {
           </template>
         </Column>
 
-        <!-- Yeni sütun: Açıklama -->
+        <!-- Açıklama sütunu -->
         <Column field="aciklama" header="Açıklama">
           <template #body="slotProps">
             <span v-if="slotProps.data.aciklama">{{ slotProps.data.aciklama }}</span>
@@ -171,5 +224,3 @@ const logout = () => {
     </Dialog>
   </div>
 </template>
-
-

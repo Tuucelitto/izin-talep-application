@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import axios from 'axios' // JSON Server ile iletişim için eklendi
 // Kullanıcı ve izin store'ları
 import { useKullanici } from '~/stores/useKullanici'
 import { useIzinler } from '~/stores/useIzinler'
@@ -16,19 +17,32 @@ if (process.server) {
   throw createError({ statusCode: 404, statusMessage: 'Page Not Found' })
 }
 
-// Store’lar
+// JSON Server URL - düzeltildi
+const API_URL = 'http://localhost:3001/izinler'
+
+// Store'lar
 const kullaniciStore = useKullanici()
 const izinler = useIzinler()
 
 // Sayfa yüklendiğinde kullanıcı yoksa ana sayfaya yönlendir
-onMounted(() => {
+onMounted(async () => {
   if (!kullaniciStore.kullanici) {
     navigateTo('/')
     return
   }
-  // İzinleri localStorage’dan yükle
-  izinler.init()
+  // JSON Server'dan izinleri yükle
+  await fetchIzinler()
 })
+
+// JSON Server'dan izinleri çek - yeni fonksiyon
+const fetchIzinler = async () => {
+  try {
+    const response = await axios.get(API_URL)
+    izinler.izinler = response.data // Pinia state'e yükle
+  } catch (error) {
+    console.error('İzinler yüklenirken hata:', error)
+  }
+}
 
 // İzin talebi formu için reactive değişkenler
 const tur = ref<'Yıllık' | 'Hastalık' | 'Ücretsiz' | 'Diğer'>('Yıllık')
@@ -38,8 +52,8 @@ const aciklama = ref('')
 // TypeScript güvenli: kullanıcı adı
 const kullaniciAd = computed(() => kullaniciStore.kullanici?.ad || '')
 
-// İzin talebi gönderme fonksiyonu
-const gonder = () => {
+// İzin talebi gönderme fonksiyonu - JSON Server'a POST isteği eklendi
+const gonder = async () => {
   if (!kullaniciStore.kullanici || !tarihAraligi.value) {
     alert('Lütfen tüm alanları doldurunuz')
     return
@@ -47,24 +61,34 @@ const gonder = () => {
 
   const [baslangic, bitis] = tarihAraligi.value
 
-  // Yeni izin talebi oluşturuluyor
-  izinler.olustur({
+  // Yeni izin talebi objesi
+  const yeniIzin = {
     calisanId: kullaniciStore.kullanici.id,
     calisanAd: kullaniciStore.kullanici.ad,
     tur: tur.value,
     baslangic: baslangic.toISOString(),
     bitis: bitis.toISOString(),
-    aciklama: aciklama.value
-  })
+    aciklama: aciklama.value,
+    durum: 'BEKLEMEDE',
+    olusturmaTarihi: new Date().toISOString()
+  }
 
-  // **Kesin olarak localStorage’a kaydet**
-  izinler.saveToStorage()
+  try {
+    // JSON Server'a POST isteği gönder
+    const response = await axios.post(API_URL, yeniIzin)
+    
+    // Store'a da ekle (ID ile birlikte)
+    izinler.izinler.push(response.data)
 
-  // Formu sıfırla
-  aciklama.value = ''
-  tarihAraligi.value = null
+    // Formu sıfırla
+    aciklama.value = ''
+    tarihAraligi.value = null
 
-  alert('İzin talebiniz başarıyla gönderildi!')
+    alert('İzin talebiniz başarıyla gönderildi!')
+  } catch (error) {
+    console.error('İzin talebi gönderilirken hata:', error)
+    alert('İzin talebi gönderilirken bir hata oluştu!')
+  }
 }
 
 // Beklemede olan izinleri filtrele
@@ -72,6 +96,25 @@ const beklemedeIzinler = computed(() => {
   return izinler.calisanTalebi(kullaniciStore.kullanici?.id || '')
                  .filter(i => i.durum === 'BEKLEMEDE')
 })
+
+// İzin iptal etme fonksiyonu - JSON Server'a DELETE isteği eklendi
+const iptalEt = async (izinId: string) => {
+  try {
+    // JSON Server'dan sil
+    await axios.delete(`${API_URL}/${izinId}`)
+    
+    // Store'dan da kaldır
+    const index = izinler.izinler.findIndex(i => i.id === izinId)
+    if (index > -1) {
+      izinler.izinler.splice(index, 1)
+    }
+    
+    alert('İzin talebi iptal edildi!')
+  } catch (error) {
+    console.error('İzin iptal edilirken hata:', error)
+    alert('İzin iptal edilirken bir hata oluştu!')
+  }
+}
 
 // Tarihi Türkçe formatta göster
 const formatTarih = (tarih: string) => new Date(tarih).toLocaleDateString('tr-TR')
@@ -132,7 +175,7 @@ const logout = () => {
                 severity="danger" 
                 icon="pi pi-times"
                 class="ml-4"
-                @click="izinler.iptal(izin.id, kullaniciStore.kullanici?.id || '')" 
+                @click="iptalEt(izin.id)" 
               />
             </li>
           </ul>

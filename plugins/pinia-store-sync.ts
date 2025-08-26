@@ -8,11 +8,11 @@ export default defineNuxtPlugin(() => {
     const izinlerStore = useIzinler(); 
 
     // Uygulama yüklendiğinde verileri localStorage'dan çek
-    izinlerStore.init();
+    //izinlerStore.init();
 
     // Store'da herhangi bir değişiklik olduğunda localStorage'a kaydet
-    izinlerStore.$subscribe(() => {
-      izinlerStore.saveToStorage();
-    });
+    //izinlerStore.$subscribe(() => {
+    //  izinlerStore.saveToStorage();
+    //});
   }
 });
