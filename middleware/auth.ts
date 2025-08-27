@@ -6,11 +6,18 @@ export default defineNuxtRouteMiddleware((to) => {
   }
 
   const kullaniciStore = useKullanici()
-  const kullanici = kullaniciStore.kullanici
 
+  if (!kullaniciStore.kullanici) {
+    const localUser = localStorage.getItem("kullanici")
+    if (localUser) {
+      kullaniciStore.setKullanici(JSON.parse(localUser))
+    }
+  }
+
+  const kullanici = kullaniciStore.kullanici
   // Kullanıcı giriş yapmamışsa ana sayfaya yönlendir
   if (!kullanici) {
-    return navigateTo('/')
+    return navigateTo('/login')
   }
 
   // Employee sayfası için çalışan kontrolü

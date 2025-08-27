@@ -1,0 +1,121 @@
+{
+  "users": [
+    {
+      "id": "emp-001",
+      "ad": "Tuğçe Uygur",
+      "email": "tugce@company.com",
+      "rol": "CALISAN",
+      "sifre": "tugce123"
+    },
+    {
+      "id": "emp-002",
+      "ad": "Egemen Özden",
+      "email": "egemen@company.com",
+      "rol": "CALISAN",
+      "sifre": "egemen456"
+    },
+    {
+      "id": "mgr-001",
+      "ad": "Durmuş Akman",
+      "email": "durmus@company.com",
+      "rol": "YONETICI",
+      "sifre": "durmus789"
+    },
+    {
+      "id": "mgr-002",
+      "ad": "Ali Gündoğdu",
+      "email": "ali@company.com",
+      "rol": "YONETICI",
+      "sifre": "ali321"
+    }
+  ],
+  "izinler": [
+    {
+      "id": "1",
+      "calisanId": "emp-001",
+      "calisanAd": "Tuğçe Uygur",
+      "tur": "Yıllık",
+      "baslangic": "2025-08-27T00:00:00.000Z",
+      "bitis": "2025-08-29T00:00:00.000Z",
+      "durum": "ONAYLANDI",
+      "olusturmaTarihi": "2025-08-25T12:00:00.000Z",
+      "aciklama": "Tatildeyim",
+      "not": "izin talebi onaylandı.",
+      "karar_tarihi": "2025-08-26T14:30:00.000Z"
+    },
+    {
+      "id": "2",
+      "calisanId": "emp-002",
+      "calisanAd": "Egemen Özden",
+      "tur": "Hastalık",
+      "baslangic": "2025-08-28T00:00:00.000Z",
+      "bitis": "2025-08-30T00:00:00.000Z",
+      "durum": "ONAYLANDI",
+      "olusturmaTarihi": "2025-08-26T10:00:00.000Z",
+      "aciklama": "Doktor raporu",
+      "karar_tarihi": "2025-08-26T14:30:00.000Z"
+    },
+    {
+      "id": "92cb",
+      "calisanId": "emp-001",
+      "calisanAd": "Tuğçe Uygur",
+      "tur": "Diğer",
+      "baslangic": "2025-08-31T21:00:00.000Z",
+      "bitis": "2025-09-02T21:00:00.000Z",
+      "aciklama": "izin talebi",
+      "durum": "REDDEDILDI",
+      "olusturmaTarihi": "2025-08-26T20:52:40.262Z",
+      "not": "izin talebiniz reddedildi.",
+      "karar_tarihi": "2025-08-26T14:30:00.000Z"
+    },
+    {
+      "id": "fbff",
+      "calisanId": "emp-002",
+      "calisanAd": "Egemen Özden",
+      "tur": "Yıllık",
+      "baslangic": "2025-10-04T21:00:00.000Z",
+      "bitis": "2025-10-11T21:00:00.000Z",
+      "aciklama": "",
+      "durum": "BEKLEMEDE",
+      "olusturmaTarihi": "2025-08-26T21:02:56.609Z",
+      "karar_tarihi": "2025-08-26T14:30:00.000Z"
+    },
+    {
+      "id": "e08d",
+      "calisanId": "emp-001",
+      "calisanAd": "Tuğçe Uygur",
+      "tur": "Ücretsiz",
+      "baslangic": "2025-09-13T21:00:00.000Z",
+      "bitis": "2025-09-20T21:00:00.000Z",
+      "aciklama": "",
+      "durum": "REDDEDILDI",
+      "olusturmaTarihi": "2025-08-26T21:36:11.268Z",
+      "karar_tarihi": "2025-08-26T14:30:00.000Z"
+    },
+    {
+      "id": "5f9c",
+      "calisanId": "emp-001",
+      "calisanAd": "Tuğçe Uygur",
+      "tur": "Yıllık",
+      "baslangic": "2025-09-06T21:00:00.000Z",
+      "bitis": "2025-09-13T21:00:00.000Z",
+      "aciklama": "yıllık izin talebi",
+      "durum": "ONAYLANDI",
+      "olusturmaTarihi": "2025-08-27T08:01:44.385Z",
+      "not": "onaylıyorum",
+      "karar_tarihi": "2025-08-26T14:30:00.000Z"
+    },
+    {
+      "id": "ef3a",
+      "calisanId": "emp-001",
+      "calisanAd": "Tuğçe Uygur",
+      "tur": "Hastalık",
+      "baslangic": "2025-08-27T11:43:52.631Z",
+      "bitis": "2025-08-27T11:43:54.285Z",
+      "aciklama": "",
+      "durum": "BEKLEMEDE",
+      "olusturmaTarihi": "2025-08-27T11:43:55.632Z",
+      "karar_tarihi": "2025-08-27T14:30:00.000Z"
+    }
+  ]
+}

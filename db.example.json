@@ -1,0 +1,33 @@
+{
+  "users": [
+    {
+      "id": "emp-001",
+      "ad": "Tuğçe Uygur",
+      "email": "example@example.com",
+      "rol": "CALISAN",
+      "sifre": "***"
+    },
+    {
+      "id": "mgr-001",
+      "ad": "Ahmet Yöneticı",
+      "email": "manager@example.com",
+      "rol": "YONETICI",
+      "sifre": "***"
+    }
+  ],
+  "izinler": [
+    {
+      "id": "1",
+      "calisanId": "emp-001",
+      "calisanAd": "Tuğçe Uygur",
+      "tur": "Yıllık",
+      "baslangic": "2025-08-27T00:00:00.000Z",
+      "bitis": "2025-08-29T00:00:00.000Z",
+      "durum": "ONAYLANDI",
+      "olusturmaTarihi": "2025-08-25T12:00:00.000Z",
+      "aciklama": "Tatildeyim",
+      "not": "İzin talebi onaylandı.",
+      "karar_tarihi": "2025-08-26T14:30:00.000Z"
+    }
+  ]
+}

@@ -82,7 +82,8 @@ const onaylaReddet = async () => {
     const guncellenenIzin = {
       ...izin,
       durum: durum as 'ONAYLANDI' | 'REDDEDILDI',
-      ...(notMetni.value && { not: notMetni.value })
+      ...(notMetni.value && { not: notMetni.value }),
+      karar_tarihi: new Date().toISOString() // karar tarihi eklendi
     }
 
     // JSON Server'a PUT isteği ile güncelle

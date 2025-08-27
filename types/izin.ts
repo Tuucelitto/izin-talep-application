@@ -9,6 +9,7 @@ export interface Izin {
   durum: 'BEKLEMEDE' | 'ONAYLANDI' | 'REDDEDILDI' | 'IPTAL_EDILDI'
   not?: string
   olusturmaTarihi: string
+  karar_tarihi?: string
 }
 
 export interface Kullanici {
@@ -16,6 +17,7 @@ export interface Kullanici {
   ad: string
   rol: 'CALISAN' | 'YONETICI'
   email?: string // Opsiyonel email alanı
+  sifre: string // Şifre alanı
 }
 
 export type Rol = 'CALISAN' | 'YONETICI'

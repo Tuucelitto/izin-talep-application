@@ -16,6 +16,7 @@ import Dropdown from 'primevue/dropdown'
 import Calendar from 'primevue/calendar'
 import Textarea from 'primevue/textarea'
 import Button from 'primevue/button'
+import Badge from 'primevue/badge'
 
 // SSR kontrolü: sunucu tarafında çalışıyorsa 404 göster
 if (process.server) {
@@ -101,8 +102,19 @@ const beklemedeIzinler = computed(() => {
                  .filter(i => i.durum === 'BEKLEMEDE')
 })
 
+// Tamamlanmış izinleri filtrele (ONAYLANDI veya REDDEDILDI)
+const tamamlanmisIzinler = computed(() => {
+  return izinler.calisanTalebi(kullaniciStore.kullanici?.id || '')
+                 .filter(i => i.durum === 'ONAYLANDI' || i.durum === 'REDDEDILDI')
+                 .sort((a, b) => new Date(b.karar_tarihi || b.olusturmaTarihi).getTime() - new Date(a.karar_tarihi || a.olusturmaTarihi).getTime())
+})
+
 // İzin iptal etme fonksiyonu - JSON Server'a DELETE isteği eklendi
 const iptalEt = async (izinId: string) => {
+  if (!confirm('İzin talebini iptal etmek istediğinizden emin misiniz?')) {
+    return
+  }
+
   try {
     // JSON Server'dan sil
     await axios.delete(`${API_URL}/${izinId}`)
@@ -122,6 +134,18 @@ const iptalEt = async (izinId: string) => {
 
 // Tarihi Türkçe formatta göster
 const formatTarih = (tarih: string) => new Date(tarih).toLocaleDateString('tr-TR')
+
+// Durum badge'i için renk ve ikon belirleme
+const getDurumBadge = (durum: string) => {
+  switch (durum) {
+    case 'ONAYLANDI':
+      return { severity: 'success', icon: 'pi pi-check-circle', text: 'Onaylandı' }
+    case 'REDDEDILDI':
+      return { severity: 'danger', icon: 'pi pi-times-circle', text: 'Reddedildi' }
+    default:
+      return { severity: 'warning', icon: 'pi pi-clock', text: 'Beklemede' }
+  }
+}
 
 // Çıkış yapma fonksiyonu
 const logout = () => {
@@ -143,6 +167,7 @@ const logout = () => {
           <Button label="Çıkış Yap" severity="primary" icon="pi pi-sign-out" @click="logout" />
         </div>
 
+        <!-- Yeni İzin Talebi Formu -->
         <div class="bg-white rounded-xl shadow-lg p-6">
           <h2 class="text-2xl font-bold text-gray-800 mb-6">Yeni İzin Talebi Oluştur</h2>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -165,19 +190,24 @@ const logout = () => {
           </div>
         </div>
 
+        <!-- Beklemede Olan İzinler -->
         <div class="bg-white rounded-xl shadow-lg p-6">
           <h2 class="text-2xl font-bold text-gray-800 mb-4">Beklemede Olan İzinlerim</h2>
           
           <ul class="space-y-4">
             <li v-for="izin in beklemedeIzinler" :key="izin.id" class="flex justify-between items-center bg-gray-50 rounded-lg p-4 transition-transform transform hover:scale-[1.01]">
               <div class="flex-grow">
-                <span class="font-medium text-gray-800">{{ formatTarih(izin.baslangic) }} - {{ formatTarih(izin.bitis) }}</span>
-                <span class="ml-4 px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">{{ izin.tur }}</span>
+                <div class="flex items-center gap-4">
+                  <span class="font-medium text-gray-800">{{ formatTarih(izin.baslangic) }} - {{ formatTarih(izin.bitis) }}</span>
+                  <Badge :value="izin.tur" class="bg-blue-100 text-blue-800" />
+                </div>
+                <p v-if="izin.aciklama" class="text-sm text-gray-600 mt-2 italic">{{ izin.aciklama }}</p>
               </div>
               <Button 
                 label="İptal Et" 
                 severity="danger" 
                 icon="pi pi-times"
+                size="small"
                 class="ml-4"
                 @click="iptalEt(izin.id)" 
               />
@@ -185,7 +215,64 @@ const logout = () => {
           </ul>
 
           <div v-if="beklemedeIzinler.length === 0" class="text-center py-8 bg-gray-50 rounded-lg text-gray-500">
+            <i class="pi pi-clock text-4xl mb-3 block"></i>
             <p>Beklemede izin talebi bulunmamaktadır.</p>
+          </div>
+        </div>
+
+        <!-- Tamamlanmış İzinler (Onaylanmış/Reddedilmiş) -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+          <h2 class="text-2xl font-bold text-gray-800 mb-4">İzin Geçmişim</h2>
+          
+          <ul class="space-y-4">
+            <li v-for="izin in tamamlanmisIzinler" :key="izin.id" class="bg-gray-50 rounded-lg p-4 transition-transform transform hover:scale-[1.01]">
+              <div class="flex justify-between items-start">
+                <div class="flex-grow">
+                  <div class="flex items-center gap-4 mb-2">
+                    <span class="font-medium text-gray-800">{{ formatTarih(izin.baslangic) }} - {{ formatTarih(izin.bitis) }}</span>
+                    <Badge :value="izin.tur" class="bg-blue-100 text-blue-800" />
+                  </div>
+                  
+                  <!-- Yönetici Notu (eğer varsa) -->
+                  <div v-if="izin.not" class="my-3 p-3 bg-amber-50 border-l-4 border-amber-400 rounded">
+                    <p class="text-sm font-medium text-amber-800 mb-1">
+                      <i class="pi pi-comment mr-1"></i>
+                      Yönetici Notu:
+                    </p>
+                    <p class="text-sm text-amber-700 italic">{{ izin.not }}</p>
+                  </div>
+                  
+                  <!-- Çalışan Açıklaması (eğer varsa) -->
+                  <p v-if="izin.aciklama" class="text-sm text-gray-600 italic">
+                    <strong>Açıklama:</strong> {{ izin.aciklama }}
+                  </p>
+                  
+                  <!-- Karar Tarihi -->
+                  <p v-if="izin.karar_tarihi" class="text-xs text-gray-500 mt-2">
+                    Karar Tarihi: {{ formatTarih(izin.karar_tarihi) }}
+                  </p>
+                </div>
+                
+                <!-- Durum Badge'i -->
+                <div class="ml-4 flex-shrink-0">
+                  <Badge 
+                    :value="getDurumBadge(izin.durum).text"
+                    :severity="getDurumBadge(izin.durum).severity"
+                    class="text-sm font-semibold px-3 py-1"
+                  >
+                    <template #default>
+                      <i :class="getDurumBadge(izin.durum).icon" class="mr-1"></i>
+                      {{ getDurumBadge(izin.durum).text }}
+                    </template>
+                  </Badge>
+                </div>
+              </div>
+            </li>
+          </ul>
+
+          <div v-if="tamamlanmisIzinler.length === 0" class="text-center py-8 bg-gray-50 rounded-lg text-gray-500">
+            <i class="pi pi-history text-4xl mb-3 block"></i>
+            <p>Henüz tamamlanmış izin kaydı bulunmamaktadır.</p>
           </div>
         </div>
       </div>
@@ -215,6 +302,32 @@ const logout = () => {
   border-color: #2563eb !important;
 }
 
+.p-button.p-button-danger {
+  background-color: #ef4444 !important;
+  border-color: #ef4444 !important;
+  color: white !important;
+}
+.p-button.p-button-danger:hover {
+  background-color: #dc2626 !important;
+  border-color: #dc2626 !important;
+}
+
+/* Badge stilleri */
+.p-badge.p-badge-success {
+  background-color: #10b981 !important;
+  color: white !important;
+}
+
+.p-badge.p-badge-danger {
+  background-color: #ef4444 !important;
+  color: white !important;
+}
+
+.p-badge.p-badge-warning {
+  background-color: #f59e0b !important;
+  color: white !important;
+}
+
 /* Diğer bileşenlerin stilleri */
 .p-dropdown .p-dropdown-panel .p-dropdown-items .p-dropdown-item {
   color: #374151;
@@ -227,6 +340,23 @@ const logout = () => {
 .p-calendar:focus-within, .p-dropdown:focus-within, .p-textarea:focus-within {
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+/* Yönetici notu kutusu */
+.bg-amber-50 {
+  background-color: #fffbeb;
+}
+
+.border-amber-400 {
+  border-color: #fbbf24;
+}
+
+.text-amber-800 {
+  color: #92400e;
+}
+
+.text-amber-700 {
+  color: #b45309;
 }
 
 body {
