@@ -6,6 +6,11 @@ import { useKullanici } from '~/stores/useKullanici'
 import { useIzinler } from '~/stores/useIzinler'
 import { navigateTo } from '#app'
 
+// Middleware ile rol kontrolü
+definePageMeta({
+  middleware: 'auth'
+})
+
 // PrimeVue bileşenleri
 import Dropdown from 'primevue/dropdown'
 import Calendar from 'primevue/calendar'
@@ -24,12 +29,11 @@ const API_URL = 'http://localhost:3001/izinler'
 const kullaniciStore = useKullanici()
 const izinler = useIzinler()
 
-// Sayfa yüklendiğinde kullanıcı yoksa ana sayfaya yönlendir
+// Sayfa yüklendiğinde izinleri yükle
 onMounted(async () => {
-  if (!kullaniciStore.kullanici) {
-    navigateTo('/')
-    return
-  }
+  // Store'dan kullanıcı bilgilerini yükle
+  kullaniciStore.initFromStorage()
+  
   // JSON Server'dan izinleri yükle
   await fetchIzinler()
 })

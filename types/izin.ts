@@ -15,6 +15,7 @@ export interface Kullanici {
   id: string
   ad: string
   rol: 'CALISAN' | 'YONETICI'
+  email?: string // Opsiyonel email alanı
 }
 
 export type Rol = 'CALISAN' | 'YONETICI'

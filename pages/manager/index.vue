@@ -5,6 +5,11 @@ import { useIzinler } from '~/stores/useIzinler'
 import { navigateTo } from '#app'
 import axios from 'axios' // JSON Server ile iletişim için
 
+// Middleware ile rol kontrolü
+definePageMeta({
+  middleware: 'auth'
+})
+
 // PrimeVue bileşenleri
 import Button from 'primevue/button'
 import DataTable from 'primevue/datatable'
@@ -25,17 +30,11 @@ const izinler = useIzinler() as ReturnType<typeof useIzinler> // init gibi actio
 // JSON Server URL - düzeltildi
 const API_URL = 'http://localhost:3001/izinler'
 
-// Sayfa yüklendiğinde kullanıcı yoksa ana sayfaya yönlendir
+// Sayfa yüklendiğinde izinleri yükle
 onMounted(async () => {
-  if (!kullaniciStore.kullanici) {
-    navigateTo('/')
-    return
-  }
-  if (kullaniciStore.kullanici.rol !== 'YONETICI') {
-    navigateTo('/')
-    return
-  }
-
+  // Store'dan kullanıcı bilgilerini yükle
+  kullaniciStore.initFromStorage()
+  
   // JSON Server'dan izinleri çek
   await fetchIzinler()
 })

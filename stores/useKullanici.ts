@@ -1,72 +1,46 @@
-import { defineStore } from 'pinia'
-import type { Kullanici, Rol } from '~/types/izin'
+// stores/useKullanici.ts
+import type { Kullanici } from '~/types/izin'
 
 export const useKullanici = defineStore('kullanici', {
   state: () => ({
     kullanici: null as Kullanici | null
   }),
 
-  getters: {
-    rol: (state) => state.kullanici?.rol || 'CALISAN',
-    ad: (state) => state.kullanici?.ad || '',
-    isAuthenticated: (state) => !!state.kullanici
-  },
-
   actions: {
-    init() {
-      // Client-side'da çalıştığından emin ol
-      if (process.client) {
-        this.loadFromStorage()
-      }
-    },
-
-    loadFromStorage() {
-      try {
-        if (typeof window !== 'undefined') {
-          const stored = localStorage.getItem('kullanici')
-          if (stored) {
-            this.kullanici = JSON.parse(stored)
-          }
-        }
-      } catch (error) {
-        console.error('Kullanıcı yüklenirken hata:', error)
-      }
-    },
-
-    saveToStorage() {
-      try {
-        if (typeof window !== 'undefined' && this.kullanici) {
-          localStorage.setItem('kullanici', JSON.stringify(this.kullanici))
-        }
-      } catch (error) {
-        console.error('Kullanıcı kaydedilirken hata:', error)
-      }
-    },
-
     setKullanici(kullanici: Kullanici) {
       this.kullanici = kullanici
-      this.saveToStorage()
-    },
-
-    setRol(yeniRol: Rol) {
-      if (this.kullanici) {
-        this.kullanici.rol = yeniRol
-        this.saveToStorage()
-      }
-    },
-
-    setAd(yeniAd: string) {
-      if (this.kullanici) {
-        this.kullanici.ad = yeniAd
-        this.saveToStorage()
+      // localStorage'a kaydet (opsiyonel - tarayıcı kapatılınca unutulsun istiyorsan kaldır)
+      if (process.client) {
+        localStorage.setItem('kullanici', JSON.stringify(kullanici))
       }
     },
 
     logout() {
       this.kullanici = null
-      if (typeof window !== 'undefined') {
+      if (process.client) {
         localStorage.removeItem('kullanici')
       }
+    },
+
+    // Sayfa yenilendiğinde kullanıcı bilgilerini geri yükle
+    initFromStorage() {
+      if (process.client) {
+        const stored = localStorage.getItem('kullanici')
+        if (stored) {
+          try {
+            this.kullanici = JSON.parse(stored)
+          } catch (error) {
+            console.error('Kullanıcı bilgileri yüklenirken hata:', error)
+            localStorage.removeItem('kullanici')
+          }
+        }
+      }
     }
+  },
+
+  getters: {
+    isLoggedIn: (state) => !!state.kullanici,
+    isEmployee: (state) => state.kullanici?.rol === 'CALISAN',
+    isManager: (state) => state.kullanici?.rol === 'YONETICI'
   }
 })
