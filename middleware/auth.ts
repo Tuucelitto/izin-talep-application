@@ -17,7 +17,7 @@ export default defineNuxtRouteMiddleware((to) => {
   const kullanici = kullaniciStore.kullanici
   // Kullanıcı giriş yapmamışsa ana sayfaya yönlendir
   if (!kullanici) {
-    return navigateTo('/login')
+    return navigateTo('/')
   }
 
   // Employee sayfası için çalışan kontrolü

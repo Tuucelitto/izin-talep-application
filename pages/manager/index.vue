@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useKullanici } from '~/stores/useKullanici'
 import { useIzinler } from '~/stores/useIzinler'
 import { navigateTo } from '#app'
@@ -29,6 +29,21 @@ const izinler = useIzinler() as ReturnType<typeof useIzinler> // init gibi actio
 
 // JSON Server URL - düzeltildi
 const API_URL = 'http://localhost:3001/izinler'
+
+// Arama filtresi
+const aramaMetni = ref('')
+
+// Filtrelenmiş izinleri hesaplayan computed
+const filtrelenmisIzinler = computed(() => {
+  if (!aramaMetni.value.trim()) {
+    return izinler.izinler
+  }
+  
+  const arama = aramaMetni.value.toLowerCase().trim()
+  return izinler.izinler.filter(izin => 
+    izin.calisanAd.toLowerCase().includes(arama)
+  )
+})
 
 // Sayfa yüklendiğinde izinleri yükle
 onMounted(async () => {
@@ -82,7 +97,7 @@ const onaylaReddet = async () => {
     const guncellenenIzin = {
       ...izin,
       durum: durum as 'ONAYLANDI' | 'REDDEDILDI',
-      ...(notMetni.value && { not: notMetni.value }),
+      ...(notMetni.value && { yonetici_notu: notMetni.value }),
       karar_tarihi: new Date().toISOString() // karar tarihi eklendi
     }
 
@@ -121,7 +136,30 @@ const logout = () => {
         <h1 class="text-2xl font-bold text-gray-800">Yönetici Paneli</h1>
         <p class="text-gray-600">Hoş geldin, {{ kullaniciStore.kullanici?.ad }}</p>
       </div>
-      <Button label="Çıkış Yap" severity="secondary" @click="logout" />
+      <!-- Çıkış yap butonu: primary (mavi) olarak ayarlandı -->
+      <Button label="Çıkış Yap" severity="primary" icon="pi pi-sign-out" @click="logout" />
+    </div>
+
+    <!-- Arama Çubuğu -->
+    <div class="bg-white rounded-lg shadow-md p-3 w-fit">
+      <div class="flex items-center gap-2">
+        <i class="pi pi-search text-gray-500 text-sm"></i>
+        <input
+          v-model="aramaMetni"
+          type="text"
+          placeholder="Çalışan ara..."
+          class="w-[180px] px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+        />
+        <Button 
+          v-if="aramaMetni"
+          icon="pi pi-times" 
+          text 
+          size="small"
+          severity="secondary" 
+          @click="aramaMetni = ''" 
+          title="Temizle"
+        />
+      </div>
     </div>
 
     <!-- Tüm İzin Talepleri -->
@@ -129,7 +167,7 @@ const logout = () => {
       <h2 class="text-xl font-bold mb-4">Tüm İzin Talepleri</h2>
 
       <DataTable 
-        :value="izinler.izinler" 
+        :value="filtrelenmisIzinler" 
         :filters="filtreler" 
         filterDisplay="menu"
         paginator 
@@ -158,7 +196,9 @@ const logout = () => {
         <!-- Açıklama sütunu -->
         <Column field="aciklama" header="Açıklama">
           <template #body="slotProps">
-            <span v-if="slotProps.data.aciklama">{{ slotProps.data.aciklama }}</span>
+            <div v-if="slotProps.data.aciklama" class="bg-amber-50 p-2 rounded border-l-4 border-amber-400">
+              <span class="text-amber-800">{{ slotProps.data.aciklama }}</span>
+            </div>
             <span v-else class="text-gray-400 italic">-</span>
           </template>
         </Column>
@@ -224,3 +264,29 @@ const logout = () => {
     </Dialog>
   </div>
 </template>
+
+<style scoped>
+/* Amber renk sınıfları eklendi */
+.bg-amber-50 {
+  background-color: #fffbeb;
+}
+
+.border-amber-400 {
+  border-color: #fbbf24;
+}
+
+.text-amber-800 {
+  color: #92400e;
+}
+
+/* Primary buton renkleri */
+.p-button.p-button-primary {
+  background-color: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+  color: white !important;
+}
+.p-button.p-button-primary:hover {
+  background-color: #2563eb !important;
+  border-color: #2563eb !important;
+}
+</style>
