@@ -364,4 +364,3 @@ body {
 }
 </style>
 
-//deneme
